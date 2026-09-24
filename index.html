@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f6f9">
+  <title>客户支持工作台 · Northstar</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="rail" aria-label="主导航">
+      <a class="brand-mark" href="#" aria-label="Northstar 首页">n</a>
+      <button class="rail-button active" aria-label="收件箱" title="收件箱">▤</button>
+      <button class="rail-button" aria-label="联系人" title="联系人">♙</button>
+      <button class="rail-button" aria-label="报告" title="报告">▥</button>
+      <div class="rail-bottom"><span class="avatar avatar-rail">林</span></div>
+    </aside>
+
+    <aside class="inbox-panel">
+      <div class="workspace-row">
+        <div class="workspace-logo">N</div>
+        <div><strong>Northstar</strong><small>客户体验团队</small></div>
+        <button class="icon-button" aria-label="工作区选项">⌄</button>
+      </div>
+      <div class="inbox-heading"><div><p class="eyebrow">工作区</p><h1>收件箱</h1></div><button id="reset-data" class="icon-button" title="重置示例数据" aria-label="重置示例数据">↻</button></div>
+      <div class="inbox-tabs"><button class="tab active" data-view="all">全部 <span id="all-count">0</span></button><button class="tab" data-view="mine">分配给我</button></div>
+      <div class="toolbar">
+        <label class="search-box"><span>⌕</span><input id="search" type="search" placeholder="搜索对话" autocomplete="off"></label>
+        <select id="channel-filter" aria-label="按渠道筛选"><option value="all">所有渠道</option><option value="在线聊天">在线聊天</option><option value="邮件">邮件</option><option value="微信">微信</option></select>
+      </div>
+      <div class="list-label"><span>未结对话</span><select id="status-filter" aria-label="按状态筛选"><option value="open">处理中</option><option value="pending">待回复</option><option value="resolved">已解决</option><option value="all">全部状态</option></select></div>
+      <div id="ticket-list" class="ticket-list" aria-live="polite"></div>
+      <div id="list-empty" class="empty-state hidden">没有符合条件的对话。</div>
+      <div class="inbox-footer"><span class="online-dot"></span> 4 位客服在线 <span class="footer-spacer"></span><span>演示工作区</span></div>
+    </aside>
+
+    <main class="conversation-panel">
+      <div id="no-selection" class="welcome-state"><div class="welcome-icon">✳</div><h2>把每一次对话，变成更好的体验</h2><p>从左侧选择一条对话，查看详情并继续处理。</p></div>
+      <section id="conversation" class="conversation hidden" aria-label="对话详情">
+        <header class="conversation-header">
+          <button id="back-to-inbox" class="back-button" type="button">← 收件箱</button>
+          <div class="customer-heading"><span id="customer-avatar" class="avatar avatar-large"></span><div><h2 id="customer-name"></h2><p id="customer-meta"></p></div></div>
+          <div class="header-actions"><label class="control-label">负责人<select id="assignee"></select></label><label class="control-label">状态<select id="ticket-status"><option value="open">处理中</option><option value="pending">待回复</option><option value="resolved">已解决</option></select></label><button id="resolve-button" class="primary-small">标记已解决</button></div>
+        </header>
+        <div class="subject-bar"><div><span id="channel-pill" class="channel-pill"></span><strong id="ticket-subject"></strong></div><span id="ticket-id" class="ticket-id"></span></div>
+        <div id="message-thread" class="message-thread" aria-live="polite"></div>
+        <form id="composer" class="composer">
+          <div class="composer-top"><div class="mode-switch" role="group" aria-label="消息类型"><button type="button" class="mode-button active" data-mode="reply">↗ 回复客户</button><button type="button" class="mode-button" data-mode="note">✎ 内部备注</button></div><span class="composer-hint">Enter 发送 · Shift + Enter 换行</span></div>
+          <textarea id="draft" rows="3" placeholder="输入回复内容…" aria-label="回复内容"></textarea>
+          <div class="composer-bottom"><span id="draft-hint">客户将会收到这条消息</span><button class="send-button" type="submit">发送 <span>↗</span></button></div>
+        </form>
+      </section>
+    </main>
+
+    <aside id="contact-panel" class="contact-panel hidden" aria-label="客户信息">
+      <div class="contact-top"><span>客户资料</span><button class="icon-button" aria-label="更多客户操作">···</button></div>
+      <div class="contact-profile"><span id="profile-avatar" class="avatar avatar-profile"></span><h2 id="profile-name"></h2><p id="profile-email"></p><span class="customer-tag">客户</span></div>
+      <div class="detail-section"><p class="eyebrow">客户详情</p><div class="detail-row"><span>所在地区</span><strong id="profile-location"></strong></div><div class="detail-row"><span>客户自</span><strong id="profile-since"></strong></div><div class="detail-row"><span>历史对话</span><strong id="profile-conversations"></strong></div></div>
+      <div class="detail-section"><p class="eyebrow">备注</p><p id="profile-note" class="profile-note"></p></div>
+    </aside>
+  </div>
+  <div class="demo-banner"><span>✦</span> 交互演示 · 数据仅保存在当前浏览器，请勿填写真实客户或敏感信息</div>
+</body>
+</html>
