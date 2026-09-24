@@ -15,11 +15,12 @@
   const els = {
     root:$(".app-shell"), list:$("#ticket-list"), listEmpty:$("#list-empty"), search:$("#search"), channel:$("#channel-filter"), statusFilter:$("#status-filter"),
     conversation:$("#conversation"), noSelection:$("#no-selection"), contact:$("#contact-panel"), messages:$("#message-thread"), composer:$("#composer"), draft:$("#draft"),
-    assignee:$("#assignee"), status:$("#ticket-status"), resolve:$("#resolve-button"), allCount:$("#all-count"), draftHint:$("#draft-hint")
+    assignee:$("#assignee"), status:$("#ticket-status"), resolve:$("#resolve-button"), allCount:$("#all-count"), draftHint:$("#draft-hint"), alternate:$("#alternate-view")
   };
   let tickets = loadTickets();
   let selectedId = tickets.find((ticket) => ticket.status === "open")?.id || tickets[0]?.id || null;
   let activeView = "all";
+  let currentPage = "inbox";
   let messageMode = "reply";
 
   function loadTickets() {
@@ -59,6 +60,100 @@
     if (className) node.className = className;
     if (text !== undefined) node.textContent = text;
     return node;
+  }
+
+  function showToast(message) {
+    let toast = $("#support-toast");
+    if (!toast) { toast = create("div", "app-toast"); toast.id = "support-toast"; toast.setAttribute("role", "status"); document.body.append(toast); }
+    toast.textContent = message;
+    toast.classList.add("visible");
+    clearTimeout(showToast.timer);
+    showToast.timer = setTimeout(() => toast.classList.remove("visible"), 2400);
+  }
+
+  function setPage(view) {
+    currentPage = view;
+    document.querySelectorAll(".rail-button").forEach((button) => button.classList.toggle("active", button.dataset.view === view));
+    const isInbox = view === "inbox";
+    els.alternate.classList.toggle("hidden", isInbox);
+    els.conversation.classList.toggle("hidden", !isInbox);
+    els.contact.classList.toggle("hidden", !isInbox || !tickets.some((ticket) => ticket.id === selectedId));
+    els.noSelection.classList.toggle("hidden", !isInbox || Boolean(selectedId));
+    els.root.classList.toggle("show-conversation", !isInbox || Boolean(selectedId));
+    render();
+  }
+
+  function renderAlternateView(query = "") {
+    els.alternate.replaceChildren();
+    const heading = create("header", "alternate-heading");
+    const copy = create("div");
+    copy.append(create("p", "eyebrow", "客户体验团队"), create("h2", "", currentPage === "contacts" ? "联系人" : "服务报告"));
+    const search = create("input", "alternate-search");
+    search.type = "search"; search.placeholder = currentPage === "contacts" ? "搜索姓名或邮箱" : "报告基于当前演示工单"; search.value = query;
+    search.setAttribute("aria-label", search.placeholder);
+    if (currentPage === "contacts") search.addEventListener("input", () => {
+      const cursor = search.selectionStart;
+      renderAlternateView(search.value);
+      const next = $(".alternate-search"); next.focus(); next.setSelectionRange(cursor, cursor);
+    });
+    heading.append(copy, search);
+    els.alternate.append(heading);
+    if (currentPage === "contacts") {
+      const term = query.trim().toLocaleLowerCase();
+      const contacts = tickets.filter((ticket, index, all) => all.findIndex((item) => item.email === ticket.email) === index && `${ticket.customer} ${ticket.email}`.toLocaleLowerCase().includes(term));
+      const list = create("div", "contact-directory");
+      contacts.forEach((ticket) => {
+        const card = create("button", "directory-card"); card.type = "button";
+        const avatar = create("span", "avatar directory-avatar", ticket.initials || initials(ticket.customer)); avatar.style.background = ticket.color || "#e5e9ff";
+        const info = create("span", "directory-info"); info.append(create("strong", "", ticket.customer), create("small", "", ticket.email));
+        const count = create("span", "directory-count", `${ticket.conversations || 1} 次对话`);
+        card.append(avatar, info, count);
+        card.addEventListener("click", () => { selectedId = ticket.id; setPage("inbox"); });
+        list.append(card);
+      });
+      if (!contacts.length) list.append(create("p", "alternate-empty", "没有找到匹配的联系人。"));
+      els.alternate.append(list);
+      return;
+    }
+    const counts = [
+      ["全部工单", tickets.length], ["处理中", tickets.filter((item) => item.status === "open").length],
+      ["待回复", tickets.filter((item) => item.status === "pending").length], ["已解决", tickets.filter((item) => item.status === "resolved").length]
+    ];
+    const stats = create("div", "report-stats");
+    counts.forEach(([label, value]) => { const card = create("article", "report-stat"); card.append(create("span", "", label), create("strong", "", String(value))); stats.append(card); });
+    const channels = [...new Set(tickets.map((ticket) => ticket.channel))];
+    const section = create("section", "report-section"); section.append(create("h3", "", "渠道工单分布"));
+    channels.forEach((channel) => {
+      const channelTickets = tickets.filter((ticket) => ticket.channel === channel);
+      const row = create("div", "report-row");
+      const label = create("span", "", channel); const bar = create("span", "report-track");
+      const fill = create("i", "report-fill"); fill.style.width = `${Math.round(channelTickets.length / Math.max(tickets.length, 1) * 100)}%`; bar.append(fill);
+      row.append(label, bar, create("strong", "", String(channelTickets.length))); section.append(row);
+    });
+    els.alternate.append(stats, section, create("p", "report-footnote", "报告按当前浏览器保存的演示工单即时汇总。"));
+  }
+
+  function openMenu(anchor, options) {
+    document.querySelectorAll(".action-menu").forEach((menu) => menu.remove());
+    const menu = create("div", "action-menu"); menu.setAttribute("role", "menu");
+    options.forEach(({label, action}) => {
+      const button = create("button", "", label); button.type = "button"; button.setAttribute("role", "menuitem");
+      button.addEventListener("click", () => { menu.remove(); anchor.setAttribute("aria-expanded", "false"); action(); }); menu.append(button);
+    });
+    const rect = anchor.getBoundingClientRect();
+    menu.style.position = "fixed";
+    menu.style.top = `${Math.min(rect.bottom + 4, window.innerHeight - 150)}px`;
+    menu.style.left = `${Math.max(8, Math.min(rect.left, window.innerWidth - 190))}px`;
+    document.body.append(menu); anchor.setAttribute("aria-expanded", "true");
+    const close = (event) => { if (!menu.contains(event.target) && event.target !== anchor) { menu.remove(); anchor.setAttribute("aria-expanded", "false"); document.removeEventListener("click", close); } };
+    setTimeout(() => document.addEventListener("click", close), 0);
+  }
+
+  async function copyText(value, label) {
+    try {
+      await navigator.clipboard.writeText(value);
+      showToast(`${label}已复制`);
+    } catch { showToast("当前浏览器不允许剪贴板访问，请手动复制"); }
   }
 
   function visibleTickets() {
@@ -160,6 +255,16 @@
   }
 
   function render() {
+    if (currentPage !== "inbox") {
+      els.alternate.classList.remove("hidden");
+      els.conversation.classList.add("hidden");
+      els.contact.classList.add("hidden");
+      els.noSelection.classList.add("hidden");
+      els.root.classList.add("show-conversation");
+      renderAlternateView();
+      return;
+    }
+    els.alternate.classList.add("hidden");
     if (selectedId && !tickets.some((ticket) => ticket.id === selectedId)) selectedId = null;
     renderList();
     renderDetails(tickets.find((ticket) => ticket.id === selectedId));
@@ -179,6 +284,24 @@
     document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item === tab));
     renderList();
   }));
+  document.querySelectorAll(".rail-button").forEach((button) => button.addEventListener("click", () => setPage(button.dataset.view)));
+  $(".brand-mark").addEventListener("click", (event) => { event.preventDefault(); setPage("inbox"); });
+  $("#workspace-menu-button").addEventListener("click", (event) => {
+    event.stopPropagation();
+    openMenu(event.currentTarget, [
+      {label:"复制工作区名称", action:() => copyText("Northstar · 客户体验团队", "工作区名称")},
+      {label:"查看演示说明", action:() => showToast("演示数据仅保存在此浏览器，不会同步到云端")}
+    ]);
+  });
+  $("#contact-menu-button").addEventListener("click", (event) => {
+    event.stopPropagation();
+    const ticket = tickets.find((item) => item.id === selectedId);
+    if (!ticket) return;
+    openMenu(event.currentTarget, [
+      {label:"复制客户邮箱", action:() => copyText(ticket.email, "客户邮箱")},
+      {label:"查看该客户的全部对话", action:() => { els.search.value = ticket.customer; els.channel.value = "all"; els.statusFilter.value = "all"; activeView = "all"; document.querySelectorAll(".tab").forEach((tab) => tab.classList.toggle("active", tab.dataset.view === "all")); setPage("inbox"); }}
+    ]);
+  });
   [els.search, els.channel, els.statusFilter].forEach((control) => control.addEventListener("input", renderList));
   els.status.addEventListener("change", () => updateSelected((ticket) => { ticket.status = els.status.value; }));
   els.assignee.addEventListener("change", () => updateSelected((ticket) => { ticket.assignee = els.assignee.value; }));
@@ -218,6 +341,6 @@
     document.querySelectorAll(".tab").forEach((tab) => tab.classList.toggle("active", tab.dataset.view === "all"));
     saveTickets(); render();
   });
-  $("#back-to-inbox").addEventListener("click", () => els.root.classList.remove("show-conversation"));
+  $("#back-to-inbox").addEventListener("click", () => { els.root.classList.remove("show-conversation"); });
   render();
 })();
