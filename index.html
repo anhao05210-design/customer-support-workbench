@@ -12,9 +12,9 @@
   <div class="app-shell">
     <aside class="rail" aria-label="主导航">
       <a class="brand-mark" href="#" aria-label="Northstar 首页">n</a>
-      <button class="rail-button active" aria-label="收件箱" title="收件箱">▤</button>
-      <button class="rail-button" aria-label="联系人" title="联系人">♙</button>
-      <button class="rail-button" aria-label="报告" title="报告">▥</button>
+      <button class="rail-button active" data-view="inbox" aria-label="收件箱" title="收件箱" type="button">▤</button>
+      <button class="rail-button" data-view="contacts" aria-label="联系人" title="联系人" type="button">♙</button>
+      <button class="rail-button" data-view="reports" aria-label="报告" title="报告" type="button">▥</button>
       <div class="rail-bottom"><span class="avatar avatar-rail">林</span></div>
     </aside>
 
@@ -22,7 +22,7 @@
       <div class="workspace-row">
         <div class="workspace-logo">N</div>
         <div><strong>Northstar</strong><small>客户体验团队</small></div>
-        <button class="icon-button" aria-label="工作区选项">⌄</button>
+        <button id="workspace-menu-button" class="icon-button" aria-label="工作区选项" aria-expanded="false" type="button">⌄</button>
       </div>
       <div class="inbox-heading"><div><p class="eyebrow">工作区</p><h1>收件箱</h1></div><button id="reset-data" class="icon-button" title="重置示例数据" aria-label="重置示例数据">↻</button></div>
       <div class="inbox-tabs"><button class="tab active" data-view="all">全部 <span id="all-count">0</span></button><button class="tab" data-view="mine">分配给我</button></div>
@@ -37,6 +37,7 @@
     </aside>
 
     <main class="conversation-panel">
+      <section id="alternate-view" class="alternate-view hidden" aria-live="polite"></section>
       <div id="no-selection" class="welcome-state"><div class="welcome-icon">✳</div><h2>把每一次对话，变成更好的体验</h2><p>从左侧选择一条对话，查看详情并继续处理。</p></div>
       <section id="conversation" class="conversation hidden" aria-label="对话详情">
         <header class="conversation-header">
@@ -55,7 +56,7 @@
     </main>
 
     <aside id="contact-panel" class="contact-panel hidden" aria-label="客户信息">
-      <div class="contact-top"><span>客户资料</span><button class="icon-button" aria-label="更多客户操作">···</button></div>
+      <div class="contact-top"><span>客户资料</span><button id="contact-menu-button" class="icon-button" aria-label="更多客户操作" aria-expanded="false" type="button">···</button></div>
       <div class="contact-profile"><span id="profile-avatar" class="avatar avatar-profile"></span><h2 id="profile-name"></h2><p id="profile-email"></p><span class="customer-tag">客户</span></div>
       <div class="detail-section"><p class="eyebrow">客户详情</p><div class="detail-row"><span>所在地区</span><strong id="profile-location"></strong></div><div class="detail-row"><span>客户自</span><strong id="profile-since"></strong></div><div class="detail-row"><span>历史对话</span><strong id="profile-conversations"></strong></div></div>
       <div class="detail-section"><p class="eyebrow">备注</p><p id="profile-note" class="profile-note"></p></div>
